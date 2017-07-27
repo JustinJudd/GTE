@@ -1,0 +1,182 @@
+{{define "root"}}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="icon" href="/static/favicon.ico">
+
+    <title>≥</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="/static/css/dataTables.bootstrap.min.css">
+    <link rel=stylesheet href="/static/css/codemirror.css">
+    <link rel="stylesheet" href="/static/css/show-hint.css">
+
+    <script src="/static/js/bundle.js"></script> 
+
+
+
+
+
+    <style>
+    body {
+      padding-top: 60px;
+    }
+    </style>
+  </head>
+
+  <body>
+
+  {{$tableData := .tableData}}
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+      <a class="navbar-brand center-block text-center" href="/" style="float:none;">≥ - GTE</a>
+        
+      </div>
+    </nav>
+    
+    <div class="container-fluid">
+    
+    {{ if .message}}
+    <div class="alert alert-danger alert-dismissible" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="text-center">{{ .message.Text }}.</div>
+    </div>
+    {{ end }}
+
+{{ if .query}}
+<div class="alert alert-info" role="alert">
+  <div class="text-center">Query: {{.query}}</div>
+</div>
+{{ end }}
+
+      <div class="row">
+      <div class="col-md-12">
+
+        <table id="table" class="table table-striped table-bordered" cellspacing="0" width="100%" style="font-size: 1.5rem;font-weight: 300;">
+          <thead>
+            <tr>
+            {{ range $i, $name := .vars}}
+            <th>{{index $tableData $name}}</th>
+            {{end}}
+            </tr>
+          </thead>
+          <tbody>
+          
+          </tbody>
+        </table>
+
+        </div>
+        <hr>
+      </div>
+      <div class="row">
+
+        <form id="form" action="/showTable" method="post" onsubmit="return submitForm()">
+          <div class="col-md-4 col-md-offset-2">
+            <label for="query">Query</label><br>
+            <textarea class="" name="query" id="query" rows="12" cols="60"></textarea>
+          </div>
+          <div class="col-md-4">
+          
+           <label for="table-info">Table Columns (In YAML) [query-value:ColumnHeader - eg. (host-name:Hostname)]</label><br>
+            <textarea class="" name="table-info" id="table-info" rows="12" cols="60"></textarea>
+          </div>
+          <div class="col-md-12 text-center">
+            <button class="btn btn-info" type="submit" name="querySubmit" >Query</button>
+          </div>
+        </form>
+      </div>
+      
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="/static/js/jquery-1.11.1.min.js"><\/script>')</script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/jquery.dataTables.min.js"></script>
+    <script src="/static/js/dataTables.bootstrap.min.js"></script>
+    <script src="/static/js/dataTables.select.min.js"></script>
+
+    <script>
+
+    var schema = JSON.parse({{.schema}});
+    var graphQLEditor = Editor.default.GraphQLEditor(schema.data, document.getElementById("query"));
+    
+
+    var tableEditor = Editor.default.YAMLEditor(document.getElementById("table-info"));
+
+    function submitForm() {
+      
+      console.log("Submitted form")
+
+      var table = $("#table").DataTable();
+      var rows = table.rows( { selected: true } )
+      var d = rows.data();
+
+      var rows = [];      
+
+      d.each( function (value, index) {
+
+        rows.push(value);
+      } );
+
+
+      var query = $('#query');
+      query.val( graphQLEditor.getValue());
+      var tableInfo = $('#table-info');
+      tableInfo.val( tableEditor.getValue());
+      var newForm = jQuery('<form>', {
+        'action': '/',
+        'method': 'POST',
+        //'target': '_top'
+    }).append(jQuery('<input>', {
+        'name': 'values',
+        'value': JSON.stringify(rows),
+        'type': 'hidden'
+    })).append(query).append(tableInfo);
+    newForm.appendTo(document.body).submit();
+      return false
+    }
+
+    $(document).ready(function() {
+
+      var table = $('#table').DataTable({
+        select: true,
+    "ajax": {
+      "url": "/queryNormalized",
+	    "data": function ( d ) {		    
+        return {{.query}};
+    },
+	  "type": "POST",
+
+    },
+    columns: [
+      {{ range $i, $col := .vars}}
+        {
+          data: "{{$col}}",
+        
+        },
+      {{end}}
+    ]
+  });
+    });
+
+    
+
+
+  </script>
+
+  </body>
+</html>
+
+
+{{end}}

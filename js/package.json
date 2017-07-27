@@ -1,0 +1,20 @@
+{
+  "name": "gte",
+  "version": "1.0.0",
+  "description": "Editors for GTE",
+  "main": "main/index.js",
+  "dependencies": {
+    "codemirror": "^5.26.0",
+    "codemirror-graphql": "^0.6.4",
+    "graphql": "^0.10.1"
+  },
+  "devDependencies": {
+    "webpack": "^2.6.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Justin Judd - justin@justinjudd.org",
+  "license": "MIT"
+}
