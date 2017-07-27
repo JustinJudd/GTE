@@ -21,10 +21,6 @@
 
     <script src="/static/js/bundle.js"></script> 
 
-
-
-
-
     <style>
     body {
       padding-top: 60px;
@@ -151,27 +147,24 @@
 
       var table = $('#table').DataTable({
         select: true,
-    "ajax": {
-      "url": "/queryNormalized",
-	    "data": function ( d ) {		    
-        return {{.query}};
-    },
-	  "type": "POST",
+        "ajax": {
+          "url": "/queryNormalized",
+          "data": function ( d ) {		    
+            return {{.query}};
+          },
+          "type": "POST",
 
-    },
-    columns: [
-      {{ range $i, $col := .vars}}
-        {
-          data: "{{$col}}",
-        
         },
-      {{end}}
-    ]
-  });
+        columns: [
+          {{ range $i, $col := .vars}}
+            {
+              data: "{{$col}}",
+            
+            },
+          {{end}}
+          ]
+        });
     });
-
-    
-
 
   </script>
 
