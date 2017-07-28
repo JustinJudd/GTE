@@ -410,7 +410,6 @@ func EnhanceQuery(r *http.Request) (string, error) {
 */
 func NormalizeJSON(m json.RawMessage) string {
 	d := normalizeRecurse(m, []string{})
-	msg, _ := json.Marshal(d)
 
 	data := map[string]interface{}{
 		"data": d,
