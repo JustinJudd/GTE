@@ -11,13 +11,13 @@
 
     <title>≥</title>
 
-    <!-- Bootstrap core CSS -->
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
-
-
-    <link rel="stylesheet" href="/static/css/dataTables.bootstrap.min.css">
+ 
     <link rel=stylesheet href="/static/css/codemirror.css">
     <link rel="stylesheet" href="/static/css/show-hint.css">
+
+    <link rel="stylesheet" type="text/css" href="/static/DataTables/datatables.min.css"/>
+ 
+    <script type="text/javascript" src="/static/DataTables/datatables.min.js"></script>
 
     <script src="/static/js/bundle.js"></script> 
 
@@ -92,15 +92,6 @@
       
     </div>
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="/static/js/jquery-1.11.1.min.js"><\/script>')</script>
-    <script src="/static/js/bootstrap.min.js"></script>
-    <script src="/static/js/jquery.dataTables.min.js"></script>
-    <script src="/static/js/dataTables.bootstrap.min.js"></script>
-    <script src="/static/js/dataTables.select.min.js"></script>
 
     <script>
 
@@ -143,18 +134,14 @@
       return false
     }
 
+    var dataSet = {{ .dataSet }};
+
     $(document).ready(function() {
 
       var table = $('#table').DataTable({
         select: true,
-        "ajax": {
-          "url": "/queryNormalized",
-          "data": function ( d ) {		    
-            return {{.query}};
-          },
-          "type": "POST",
-
-        },
+        data: dataSet,
+        
         columns: [
           {{ range $i, $col := .vars}}
             {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"io/ioutil"
 	"log"
 	"math"
@@ -165,7 +166,7 @@ func main() {
 		defer func() {
 			if err != nil {
 				msg := Message{Text: err.Error(), Type: Error}
-				s.template.ExecuteTemplate(w, "root", map[string]interface{}{"query": query, "tableData": nil, "vars": nil, "message": msg, "schema": s.schema})
+				s.template.ExecuteTemplate(w, "root", map[string]interface{}{"query": query, "tableData": nil, "vars": nil, "message": msg, "schema": s.schema, "dataSet": ""})
 			}
 			return
 		}()
@@ -193,38 +194,58 @@ func main() {
 			}
 		}
 
-		s.template.ExecuteTemplate(w, "root", map[string]interface{}{"query": query, "tableData": tableData, "vars": vars, "schema": s.schema})
+		buf := bytes.NewBufferString(query)
+		responseJSON, err := postQuery(buf)
+
+		type data struct {
+			Data json.RawMessage
+		}
+		d := data{}
+		json.Unmarshal([]byte(responseJSON), &d)
+
+		if err != nil {
+			return
+		}
+
+		s.template.ExecuteTemplate(w, "root", map[string]interface{}{"query": query, "tableData": tableData, "vars": vars, "schema": s.schema, "dataSet": template.JS(d.Data)})
 
 	}))
 
 	// Maine graphql query endpoint. Proxies requests and normalizes responses
 	http.Handle("/queryNormalized", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp, err := http.Post(graphQLAddress, "application/json", r.Body)
-		defer resp.Body.Close()
-		if err != nil {
-			fmt.Println("Error forwarding query", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		response := struct {
-			Data   json.RawMessage
-			Errors []struct {
-				Message string
+		/*
+			resp, err := http.Post(graphQLAddress, "application/json", r.Body)
+			defer resp.Body.Close()
+			if err != nil {
+				fmt.Println("Error forwarding query", err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
 			}
-		}{}
-		err = json.NewDecoder(resp.Body).Decode(&response)
+
+			response := struct {
+				Data   json.RawMessage
+				Errors []struct {
+					Message string
+				}
+			}{}
+			err = json.NewDecoder(resp.Body).Decode(&response)
+			if err != nil {
+				fmt.Println("Error decoding json", err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			if len(response.Errors) > 0 {
+				http.Error(w, response.Errors[0].Message, http.StatusBadRequest)
+				return
+			}
+
+			responseJSON := NormalizeJSON(response.Data)
+		*/
+		responseJSON, err := postQuery(r.Body)
 		if err != nil {
-			fmt.Println("Error decoding json", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if len(response.Errors) > 0 {
-			http.Error(w, response.Errors[0].Message, http.StatusBadRequest)
-			return
-		}
-
-		responseJSON := NormalizeJSON(response.Data)
 
 		w.Write([]byte(responseJSON))
 	}))
@@ -234,6 +255,36 @@ func main() {
 
 	log.Fatal(http.ListenAndServe(address, nil))
 
+}
+
+func postQuery(body io.Reader) (string, error) {
+	resp, err := http.Post(graphQLAddress, "application/json", body)
+	defer resp.Body.Close()
+	if err != nil {
+		return "", fmt.Errorf("Error forwarding query: %s", err)
+	}
+
+	response := struct {
+		Data   json.RawMessage
+		Errors []struct {
+			Message string
+		}
+	}{}
+
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return "", fmt.Errorf("Error decoding json: %s", err)
+	}
+	if len(response.Errors) > 0 {
+		msg := []string{}
+		for _, e := range response.Errors {
+			msg = append(msg, e.Message)
+		}
+		return "", fmt.Errorf(strings.Join(msg, "\n"))
+	}
+
+	responseJSON := NormalizeJSON(response.Data)
+	return responseJSON, nil
 }
 
 // ExtractTableInfo takes the Table Column information to set up Table headers and columns
@@ -310,7 +361,6 @@ func EnhanceQuery(r *http.Request) (string, error) {
 			for key, val := range value {
 				if a, ok := variables[key]; ok {
 					checked = true
-					//fmt.Printf("Key %s was a match\n", key)
 					switch v := val.(type) {
 					case string:
 						variables[key] = append(a, strconv.Quote(v))
@@ -360,6 +410,7 @@ func EnhanceQuery(r *http.Request) (string, error) {
 */
 func NormalizeJSON(m json.RawMessage) string {
 	d := normalizeRecurse(m, []string{})
+	msg, _ := json.Marshal(d)
 
 	data := map[string]interface{}{
 		"data": d,
