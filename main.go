@@ -2,6 +2,9 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -9,13 +12,8 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
-	"unicode"
-
-	"encoding/json"
-	"fmt"
-	"html/template"
-
 	"strings"
+	"unicode"
 
 	"gopkg.in/yaml.v2"
 )
@@ -179,11 +177,10 @@ func main() {
 		if len(query) == 0 {
 			err = fmt.Errorf("No query provided")
 			return
-			//query = "{  host {    name    ip    info {      os      platform      uptime    }  }}"
 		}
 		q := strings.Fields(query)
 		query = strings.Join(q, " ")
-		query = fmt.Sprintf(`{"query":"%s"}`, query) //  '{"query":"{  host {    name    ip    info {      os      platform      uptime    }  }}"}'
+		query = fmt.Sprintf(`{"query":"%s"}`, query)
 
 		tableData, vars := ExtractTableInfo(r)
 
@@ -213,34 +210,6 @@ func main() {
 
 	// Maine graphql query endpoint. Proxies requests and normalizes responses
 	http.Handle("/queryNormalized", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		/*
-			resp, err := http.Post(graphQLAddress, "application/json", r.Body)
-			defer resp.Body.Close()
-			if err != nil {
-				fmt.Println("Error forwarding query", err)
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			response := struct {
-				Data   json.RawMessage
-				Errors []struct {
-					Message string
-				}
-			}{}
-			err = json.NewDecoder(resp.Body).Decode(&response)
-			if err != nil {
-				fmt.Println("Error decoding json", err)
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			if len(response.Errors) > 0 {
-				http.Error(w, response.Errors[0].Message, http.StatusBadRequest)
-				return
-			}
-
-			responseJSON := NormalizeJSON(response.Data)
-		*/
 		responseJSON, err := postQuery(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -346,13 +315,16 @@ func EnhanceQuery(r *http.Request) (string, error) {
 		variables := map[string][]string{}
 		valuesData := r.PostFormValue("values")
 		values := []map[string]interface{}{}
-		json.Unmarshal([]byte(valuesData), &values)
+		err = json.Unmarshal([]byte(valuesData), &values)
+		if err != nil {
+			return "", fmt.Errorf("Error unmarshaling values: %s", err)
+		}
 		if len(values) == 0 { // No values passed on - maybe no selected rows
 			return "", fmt.Errorf("No values provided for variables")
 		}
 		for _, s := range strings.Split(query, "$")[1:] {
 			f := strings.FieldsFunc(s, func(r rune) bool {
-				return !unicode.IsLetter(r) && r != '.' && r != '-'
+				return !unicode.IsLetter(r) && r != '.' && r != '-' && r != '_'
 			})
 			variables[f[0]] = []string{}
 		}
@@ -392,6 +364,7 @@ func EnhanceQuery(r *http.Request) (string, error) {
 				v = val[0]
 			}
 
+			fmt.Printf("Replacing $%s with %s  \n", variable, v)
 			query = strings.Replace(query, "$"+variable, v, -1)
 		}
 
