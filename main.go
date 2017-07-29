@@ -15,16 +15,8 @@ import (
 	"strings"
 	"unicode"
 
+	flag "github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
-)
-
-const (
-	address = ":9090"
-	//graphQLAddress = "http://127.0.0.1:8080/query"
-	//graphQLAddress = "https://www.graphqlhub.com/graphql"
-	graphQLAddress = "https://pokeapi-graphiql.herokuapp.com/"
-	//graphQLAddress = "http://swapi.graphene-python.org/graphql"
-	//graphQLAddress = "https://hackerone.com/graphql"
 )
 
 const introspectionQuery = `query IntrospectionQuery {
@@ -135,7 +127,19 @@ type Message struct {
 	Type MessageType
 }
 
+var portFlag int
+var remoteFlag string
+var listenFlag string
+
+func init() {
+	flag.IntVarP(&portFlag, "port", "p", 9090, "port to run GTE web interface on")
+	flag.StringVarP(&listenFlag, "listen", "l", "localhost", "address for GTE to listen on")
+	flag.StringVarP(&remoteFlag, "remote", "r", "https://pokeapi-graphiql.herokuapp.com", "remote server to proxy GraphQL requests to")
+}
+
 func main() {
+
+	flag.Parse()
 
 	s := server{}
 
@@ -143,7 +147,7 @@ func main() {
 
 	query := fmt.Sprintf(`{"query":"%s"}`, strings.Replace(introspectionQuery, "\n", "\\n", -1))
 	buf := bytes.NewBufferString(query)
-	resp, err := http.Post(graphQLAddress, "application/json", buf)
+	resp, err := http.Post(remoteFlag, "application/json", buf)
 	if err != nil {
 		fmt.Println("Unable to get schema from GraphQL Endpoint")
 		fmt.Println(err)
@@ -222,12 +226,12 @@ func main() {
 	// Serves static content for the app
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
-	log.Fatal(http.ListenAndServe(address, nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", listenFlag, portFlag), nil))
 
 }
 
 func postQuery(body io.Reader) (string, error) {
-	resp, err := http.Post(graphQLAddress, "application/json", body)
+	resp, err := http.Post(remoteFlag, "application/json", body)
 	defer resp.Body.Close()
 	if err != nil {
 		return "", fmt.Errorf("Error forwarding query: %s", err)
