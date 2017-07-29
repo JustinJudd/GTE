@@ -134,7 +134,7 @@ var listenFlag string
 func init() {
 	flag.IntVarP(&portFlag, "port", "p", 9090, "port to run GTE web interface on")
 	flag.StringVarP(&listenFlag, "listen", "l", "localhost", "address for GTE to listen on")
-	flag.StringVarP(&remoteFlag, "remote", "r", "https://pokeapi-graphiql.herokuapp.com", "remote server to proxy GraphQL requests to")
+	flag.StringVarP(&remoteFlag, "remote", "r", "https://www.graphqlhub.com/graphql", "remote server to proxy GraphQL requests to")
 }
 
 func main() {
@@ -352,7 +352,7 @@ func EnhanceQuery(r *http.Request) (string, error) {
 					default:
 						fmt.Printf("Didn't catch type %T of %v", v, v)
 					}
-					break
+					continue
 				}
 			}
 			if !checked {
@@ -361,6 +361,9 @@ func EnhanceQuery(r *http.Request) (string, error) {
 		}
 
 		for variable, val := range variables {
+			if len(val) == 0 {
+				return "", fmt.Errorf("No value information found for %s", variable)
+			}
 			var v string
 			if len(val) > 1 {
 				v = fmt.Sprintf("[%s]", strings.Join(val, ","))
@@ -368,7 +371,6 @@ func EnhanceQuery(r *http.Request) (string, error) {
 				v = val[0]
 			}
 
-			fmt.Printf("Replacing $%s with %s  \n", variable, v)
 			query = strings.Replace(query, "$"+variable, v, -1)
 		}
 
