@@ -184,7 +184,7 @@ func main() {
 		}
 		q := strings.Fields(query)
 		query = strings.Join(q, " ")
-		query = fmt.Sprintf(`{"query":"%s"}`, query)
+		finishedQuery := fmt.Sprintf(`{"query":"%s"}`, query)
 
 		tableData, vars := ExtractTableInfo(r)
 
@@ -195,7 +195,7 @@ func main() {
 			}
 		}
 
-		buf := bytes.NewBufferString(query)
+		buf := bytes.NewBufferString(finishedQuery)
 		responseJSON, err := postQuery(buf)
 
 		type data struct {

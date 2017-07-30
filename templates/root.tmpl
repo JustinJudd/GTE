@@ -75,14 +75,22 @@
       <div class="row">
 
         <form id="form" action="/showTable" method="post" onsubmit="return submitForm()">
+        
           <div class="col-md-4 col-md-offset-2">
-            <label for="query">Query</label><br>
-            <textarea class="" name="query" id="query" rows="12" cols="60"></textarea>
+            <div class="panel panel-info">
+              <div class="panel-heading text-center"> Query</div>
+              <div class="panel-body">
+                <textarea class="" name="query" id="query" rows="12" cols="60"></textarea>
+              </div>
+            </div>
           </div>
           <div class="col-md-4">
-          
-           <label for="table-info">Table Columns (In YAML) [query-value:ColumnHeader - eg. (host-name:Hostname)]</label><br>
-            <textarea class="" name="table-info" id="table-info" rows="12" cols="60"></textarea>
+            <div class="panel panel-success">
+                <div class="panel-heading text-center"> Table Columns (In YAML) [query-value:ColumnHeader - eg. (host-name:Hostname)]</div>
+                <div class="panel-body">
+                  <textarea class="" name="table-info" id="table-info" rows="12" cols="60"></textarea>
+                </div>
+              </div>
           </div>
           <div class="col-md-12 text-center">
             <button class="btn btn-info" type="submit" name="querySubmit" >Query</button>
