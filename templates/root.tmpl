@@ -9,7 +9,7 @@
 
     <link rel="icon" href="/static/favicon.ico">
 
-    <title>≥</title>
+    <title>≥ - GTE</title>
 
  
     <link rel=stylesheet href="/static/css/codemirror.css">
@@ -33,7 +33,7 @@
   {{$tableData := .tableData}}
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container-fluid">
-      <a class="navbar-brand center-block text-center" href="/" style="float:none;">≥ - GTE</a>
+      <a class="navbar-brand center-block text-center" href="/" style="float:none;">≥ - Graphql Table Explorer</a>
         
       </div>
     </nav>
@@ -78,7 +78,7 @@
         
           <div class="col-md-4 col-md-offset-2">
             <div class="panel panel-info">
-              <div class="panel-heading text-center"> Query</div>
+              <div class="panel-heading text-center"> Query (GraphQL)</div>
               <div class="panel-body">
                 <textarea class="" name="query" id="query" rows="12" cols="60"></textarea>
               </div>
@@ -86,19 +86,61 @@
           </div>
           <div class="col-md-4">
             <div class="panel panel-success">
-                <div class="panel-heading text-center"> Table Columns (In YAML) [query-value:ColumnHeader - eg. (host-name:Hostname)]</div>
+                <div class="panel-heading text-center"> Table Columns (YAML)  
+                <button type="button" class="btn btn-default btn-xs pull-right" data-toggle="modal" data-target="#helpModal"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"> </span></button></div>
                 <div class="panel-body">
                   <textarea class="" name="table-info" id="table-info" rows="12" cols="60"></textarea>
                 </div>
               </div>
           </div>
           <div class="col-md-12 text-center">
-            <button class="btn btn-info" type="submit" name="querySubmit" >Query</button>
+            <button class="btn btn-primary" type="submit" name="querySubmit" >Query</button>
           </div>
         </form>
       </div>
       
     </div>
+
+<!-- Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Query Help</h4>
+      </div>
+      <div class="modal-body">
+        <p>Graphql Table Explorer allows submitting GraphQL queries and viewing the data in a table. GTE enables quick analysis and using results of previous queries as variables for future queries.</p>
+        <p>Please refer to the following example:</p>
+        <div class="row"> 
+          <div class="col-md-6">
+          <b>GraphQL Query</b>
+          <pre>{
+  hn {
+    topStories(limit: 20) {
+      title
+      url
+      score
+    }
+  }
+}</pre>
+          </div>
+          <div class="col-md-6">
+          <b>YAML Table Headers</b>
+          <pre>hn:
+  topStories:
+    title: Title
+    url: Link
+    score: Score</pre>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
     <script>
@@ -154,7 +196,7 @@
           {{ range $i, $col := .vars}}
             {
               data: "{{$col}}",
-            
+              "defaultContent": "",            
             },
           {{end}}
           ]
