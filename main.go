@@ -134,7 +134,7 @@ var listenFlag string
 func init() {
 	flag.IntVarP(&portFlag, "port", "p", 9090, "port to run GTE web interface on")
 	flag.StringVarP(&listenFlag, "listen", "l", "localhost", "address for GTE to listen on")
-	flag.StringVarP(&remoteFlag, "remote", "r", "https://www.graphqlhub.com/graphql", "remote server to proxy GraphQL requests to")
+	flag.StringVarP(&remoteFlag, "remote", "r", "https://swapi.graph.cool/", "remote server to proxy GraphQL requests to")
 }
 
 func main() {
@@ -168,7 +168,7 @@ func main() {
 		defer func() {
 			if err != nil {
 				msg := Message{Text: err.Error(), Type: Error}
-				s.template.ExecuteTemplate(w, "root", map[string]interface{}{"query": query, "tableData": nil, "vars": nil, "message": msg, "schema": s.schema, "dataSet": ""})
+				s.template.ExecuteTemplate(w, "root", map[string]interface{}{"query": query, "tableData": nil, "vars": nil, "message": msg, "schema": s.schema, "dataSet": "", "remote": remoteFlag})
 			}
 			return
 		}()
@@ -208,7 +208,7 @@ func main() {
 			return
 		}
 
-		s.template.ExecuteTemplate(w, "root", map[string]interface{}{"query": query, "tableData": tableData, "vars": vars, "schema": s.schema, "dataSet": template.JS(d.Data)})
+		s.template.ExecuteTemplate(w, "root", map[string]interface{}{"query": query, "tableData": tableData, "vars": vars, "schema": s.schema, "dataSet": template.JS(d.Data), "remote": remoteFlag})
 
 	}))
 
