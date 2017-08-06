@@ -116,22 +116,19 @@
           <div class="col-md-6">
           <b>GraphQL Query</b>
           <pre>{
-  hn {
-    topStories(limit: 20) {
-      title
-      url
-      score
-    }
+  allFilms {
+    title
+    episodeId
+    releaseDate
   }
 }</pre>
           </div>
           <div class="col-md-6">
           <b>YAML Table Headers</b>
-          <pre>hn:
-  topStories:
-    title: Title
-    url: Link
-    score: Score</pre>
+          <pre>allFilms:
+  episodeId: Episode Number
+  title: Film Title
+  releaseDate: Release Date</pre>
           </div>
         </div>
       </div>
