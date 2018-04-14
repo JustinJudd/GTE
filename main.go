@@ -1,5 +1,7 @@
 package main
 
+//go:generate go-bindata -nomemcopy js/dist/ templates/ static/...
+
 import (
 	"bytes"
 	"encoding/json"
@@ -10,11 +12,11 @@ import (
 	"log"
 	"math"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
 
+	"github.com/elazarl/go-bindata-assetfs"
 	flag "github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
@@ -143,7 +145,13 @@ func main() {
 
 	s := server{}
 
-	s.template = template.Must(template.New("").ParseGlob(filepath.Join("templates", "*.tmpl")))
+	tmplData, err := Asset("templates/root.tmpl")
+	if err != nil {
+		fmt.Println("Unable to access bundled template")
+		fmt.Println(err)
+		return
+	}
+	s.template = template.Must(template.New("root").Parse(string(tmplData)))
 
 	query := fmt.Sprintf(`{"query":"%s"}`, strings.Replace(introspectionQuery, "\n", "\\n", -1))
 	buf := bytes.NewBufferString(query)
@@ -212,7 +220,7 @@ func main() {
 
 	}))
 
-	// Maine graphql query endpoint. Proxies requests and normalizes responses
+	// Main graphql query endpoint. Proxies requests and normalizes responses
 	http.Handle("/queryNormalized", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		responseJSON, err := postQuery(r.Body)
 		if err != nil {
@@ -224,7 +232,11 @@ func main() {
 	}))
 
 	// Serves static content for the app
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	http.Handle("/static/",
+		http.StripPrefix("/static/", http.FileServer(
+			&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo, Prefix: "static"})))
+
+	fmt.Printf("Open your browser to %s:%d to access GTE\n ", listenFlag, portFlag)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", listenFlag, portFlag), nil))
 
